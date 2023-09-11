@@ -135,4 +135,4 @@ build/
 server/target/
 
 # other
-.editorconfig
+# .editorconfig
