@@ -1,6 +1,6 @@
+use derive_builder::Builder;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
-use derive_builder::Builder;
 use sqlx::FromRow;
 
 #[derive(Serialize, Deserialize, Extractible, Debug, Builder, FromRow)]
