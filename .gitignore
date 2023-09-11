@@ -130,3 +130,6 @@ dist
 .pnp.*
 node_server/
 build/
+
+# server
+server/target/
