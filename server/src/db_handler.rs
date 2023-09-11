@@ -1,25 +1,46 @@
 use anyhow::{Ok, Result};
+use async_once::AsyncOnce;
 use lazy_static::lazy_static;
 
+use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{pool::PoolConnection, sqlite::SqlitePool, Sqlite};
 use sqlx::{FromRow, Row};
 
 use crate::config::CONFIG;
 use crate::types::User;
 
+lazy_static! {
+    static ref POOL: AsyncOnce<SqlitePool> = AsyncOnce::new(async {
+        let pool = SqlitePool::connect_with(SqliteConnectOptions::new().filename(&CONFIG.database_url).create_if_missing(true)).await.unwrap();
+        init_db(pool.clone()).await;
+        pool
+    });
+}
+
+async fn init_db(pool: SqlitePool) {
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            username TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL,
+            avatar_url TEXT
+        )",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+}
+
+#[derive(Clone)]
 pub struct DBHandler {
     pool: SqlitePool,
 }
 
 impl DBHandler {
     pub async fn new() -> Self {
-        let pool = SqlitePool::connect(&CONFIG.database_url).await.unwrap();
+        let pool = POOL.get().await.clone();
         Self { pool }
     }
-
-    // pub async fn get_conn(&self) -> Result<PoolConnection<Sqlite>> {
-    //     Ok(self.pool.acquire().await?)
-    // }
 
     pub async fn init_db(&self) -> Result<()> {
         sqlx::query(

@@ -1,14 +1,17 @@
-use crate::db_handler::DBHandler;
 use crate::types::User;
+use crate::{db_handler::DBHandler, types::UserError};
 
-use anyhow::{anyhow, Ok, Result};
+use anyhow::{anyhow, Result};
+use lazy_static::lazy_static;
 
-pub struct UserAction {
+#[derive(Clone)]
+pub struct UserHandler {
     db_handler: DBHandler,
 }
 
-impl UserAction {
-    pub fn new(db_handler: DBHandler) -> Self {
+impl UserHandler {
+    pub async fn new() -> Self {
+        let db_handler = DBHandler::new().await;
         Self { db_handler }
     }
 
@@ -20,21 +23,21 @@ impl UserAction {
         Ok(())
     }
 
-    pub async fn login(&self, user: &User) -> Result<()> {
+    pub async fn login(&self, user: &User) -> Result<(), UserError> {
         let db_user = self
             .db_handler
             .get_user(&user.username)
             .await
-            .or_else(|e| Err(anyhow!("登录失败：{}", e)))?;
+            .or_else(|e| Err(UserError::Other(anyhow!("登录失败：{}", e))))?;
         match db_user {
             Some(db_user) => {
-                if user.verify_password(&db_user.password) {
+                if user.validate(&db_user.password) {
                     Ok(())
                 } else {
-                    Err(anyhow!("登录失败：密码错误"))
+                    Err(UserError::PasswordNotMatch)
                 }
             }
-            None => Err(anyhow!("登录失败：用户不存在")),
+            None => Err(UserError::UserNotFound),
         }
     }
 }

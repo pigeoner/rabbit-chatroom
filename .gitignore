@@ -136,3 +136,4 @@ server/target/
 
 # other
 # .editorconfig
+*.db

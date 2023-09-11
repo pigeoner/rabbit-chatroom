@@ -12,7 +12,17 @@ pub struct User {
 }
 
 impl User {
-    pub fn verify_password(&self, password: &str) -> bool {
+    pub fn validate(&self, password: &str) -> bool {
         self.password == password
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum UserError {
+    #[error("用户不存在")]
+    UserNotFound,
+    #[error("密码错误")]
+    PasswordNotMatch,
+    #[error("其他错误：{0}")]
+    Other(anyhow::Error),
 }

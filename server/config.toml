@@ -1,1 +1,3 @@
-database_url = "sqlite://dev.db"
+database_url = "dev/dev.db"
+avatar_dir = "dev/avatar_dir/"
+jwt_secret = "dev_secret"
