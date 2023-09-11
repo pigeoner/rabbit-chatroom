@@ -3,11 +3,11 @@ use crate::types::User;
 
 use anyhow::{anyhow, Ok, Result};
 
-pub struct UserHandler {
+pub struct UserAction {
     db_handler: DBHandler,
 }
 
-impl UserHandler {
+impl UserAction {
     pub fn new(db_handler: DBHandler) -> Self {
         Self { db_handler }
     }

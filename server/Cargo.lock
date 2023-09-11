@@ -1645,6 +1645,7 @@ dependencies = [
  "lazy_static",
  "salvo",
  "serde",
+ "sha2",
  "sqlx",
  "tokio",
  "toml",

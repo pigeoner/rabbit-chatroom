@@ -133,3 +133,6 @@ build/
 
 # server
 server/target/
+
+# other
+.editorconfig

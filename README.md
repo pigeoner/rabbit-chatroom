@@ -25,6 +25,9 @@ $ npm install
 
 ```bash
 $ npm run dev
+
+# For macOS
+$ npm run dev:mac
 ```
 
 #### 构建
