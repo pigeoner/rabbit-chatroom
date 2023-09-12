@@ -1,8 +1,8 @@
 use derive_builder::Builder;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use sqlx::Error as SqlxError;
+use sqlx::FromRow;
 
 #[derive(Serialize, Deserialize, Extractible, Debug, FromRow)]
 pub struct User {

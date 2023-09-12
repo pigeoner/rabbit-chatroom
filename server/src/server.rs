@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     config::CONFIG,
-    user_type::{UserLogin, UserError},
     user_handler::UserHandler,
+    user_type::{UserError, UserLogin},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -26,14 +26,17 @@ pub async fn serve() {
             .force_passed(true);
 
     let acceptor = TcpListener::new("127.0.0.1:80").bind().await;
+
     let router = Router::with_path("chatroom/v1").get(hello).push(
         Router::with_path("user")
             .push(Router::with_path("signup").post(signup))
             .push(Router::with_path("login").post(login))
             .hoop(auth_handler)
             .push(
-                Router::with_path("info").get(get_user_info)
-                .push(Router::with_path("update").post(update_user_info))
+                Router::with_path("info")
+                    .post(update_user_info)
+                    .push(Router::with_path("<userId>").get(get_user_info))
+                    .push(Router::with_path("avatar").post(upload_avatar)),
             ),
     );
 

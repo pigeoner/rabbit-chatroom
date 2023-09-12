@@ -2,12 +2,12 @@ use async_once::AsyncOnce;
 use lazy_static::lazy_static;
 
 use sqlx::sqlite::SqliteConnectOptions;
+use sqlx::Error as SqlxError;
 use sqlx::{pool::PoolConnection, sqlite::SqlitePool, Sqlite};
 use sqlx::{FromRow, Row};
-use sqlx::Error as SqlxError;
 
 use crate::config::CONFIG;
-use crate::user_type::{User, UserError, UserLogin, GetUserLoginFields};
+use crate::user_type::{GetUserLoginFields, User, UserError, UserLogin};
 
 lazy_static! {
     static ref POOL: AsyncOnce<SqlitePool> = AsyncOnce::new(async {
