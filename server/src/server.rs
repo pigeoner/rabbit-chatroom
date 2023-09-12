@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     config::CONFIG,
-    types::{User, UserError},
+    user_type::{UserLogin, UserError},
     user_handler::UserHandler,
 };
 
@@ -28,8 +28,13 @@ pub async fn serve() {
     let acceptor = TcpListener::new("127.0.0.1:80").bind().await;
     let router = Router::with_path("chatroom/v1").get(hello).push(
         Router::with_path("user")
-            .push(Router::with_path("register").post(signup))
-            .push(Router::with_path("login").post(login)),
+            .push(Router::with_path("signup").post(signup))
+            .push(Router::with_path("login").post(login))
+            .hoop(auth_handler)
+            .push(
+                Router::with_path("info").get(get_user_info)
+                .push(Router::with_path("update").post(update_user_info))
+            ),
     );
 
     Server::new(acceptor).serve(router).await;
@@ -50,7 +55,7 @@ async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
     log::info!("{:?}", req);
 
     let uh = UserHandler::new().await;
-    let user: User = req.parse_json().await.unwrap();
+    let user: UserLogin = req.parse_json().await.unwrap();
     if let Err(e) = uh.login(&user).await {
         match e {
             UserError::UserNotFound => {
@@ -61,6 +66,9 @@ async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
             }
             UserError::Other(e) => {
                 res.render(StatusError::internal_server_error().brief(&e.to_string()));
+            }
+            _ => {
+                res.render(StatusError::internal_server_error().brief("未知错误"));
             }
         }
     } else {
@@ -77,4 +85,19 @@ async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
         res.render(token);
     }
     Ok(())
+}
+
+#[handler]
+async fn get_user_info(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+    todo!()
+}
+
+#[handler]
+async fn update_user_info(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+    todo!()
+}
+
+#[handler]
+async fn upload_avatar(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+    todo!()
 }

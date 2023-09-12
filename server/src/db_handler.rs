@@ -1,17 +1,23 @@
-use anyhow::{Ok, Result};
 use async_once::AsyncOnce;
 use lazy_static::lazy_static;
 
 use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::{pool::PoolConnection, sqlite::SqlitePool, Sqlite};
 use sqlx::{FromRow, Row};
+use sqlx::Error as SqlxError;
 
 use crate::config::CONFIG;
-use crate::types::User;
+use crate::user_type::{User, UserError, UserLogin, GetUserLoginFields};
 
 lazy_static! {
     static ref POOL: AsyncOnce<SqlitePool> = AsyncOnce::new(async {
-        let pool = SqlitePool::connect_with(SqliteConnectOptions::new().filename(&CONFIG.database_url).create_if_missing(true)).await.unwrap();
+        let pool = SqlitePool::connect_with(
+            SqliteConnectOptions::new()
+                .filename(&CONFIG.database_url)
+                .create_if_missing(true),
+        )
+        .await
+        .unwrap();
         init_db(pool.clone()).await;
         pool
     });
@@ -31,6 +37,8 @@ async fn init_db(pool: SqlitePool) {
     .unwrap();
 }
 
+type SqlxResult<T> = Result<T, SqlxError>;
+
 #[derive(Clone)]
 pub struct DBHandler {
     pool: SqlitePool,
@@ -42,7 +50,7 @@ impl DBHandler {
         Self { pool }
     }
 
-    pub async fn init_db(&self) -> Result<()> {
+    pub async fn init_db(&self) -> SqlxResult<()> {
         sqlx::query(
             "CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY,
@@ -56,17 +64,16 @@ impl DBHandler {
         Ok(())
     }
 
-    pub async fn insert_user(&self, user: &User) -> Result<()> {
-        sqlx::query("INSERT INTO users (username, password, avatar_url) VALUES (?1, ?2, ?3)")
-            .bind(&user.username)
-            .bind(&user.password)
-            .bind(&user.avatar_url)
+    pub async fn insert_user(&self, user: &impl GetUserLoginFields) -> SqlxResult<()> {
+        sqlx::query("INSERT INTO users (username, password) VALUES (?1, ?2)")
+            .bind(user.get_username())
+            .bind(user.get_password())
             .execute(&self.pool)
             .await?;
         Ok(())
     }
 
-    pub async fn get_user(&self, username: &str) -> Result<Option<User>> {
+    pub async fn get_user(&self, username: &str) -> SqlxResult<Option<User>> {
         let row = sqlx::query("SELECT * FROM users WHERE username = ?1")
             .bind(username)
             .fetch_optional(&self.pool)
