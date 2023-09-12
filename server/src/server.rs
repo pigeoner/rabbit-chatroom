@@ -9,8 +9,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     config::CONFIG,
-    user_handler::UserHandler,
-    user_type::{UserError, UserLogin},
+    user::types::{UserError, UserLogin, UserSignup},
+    user::UserHandler,
+    verifycode::gen_register_verifycode,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,18 +28,21 @@ pub async fn serve() {
 
     let acceptor = TcpListener::new("127.0.0.1:80").bind().await;
 
-    let router = Router::with_path("chatroom/v1").get(hello).push(
-        Router::with_path("user")
-            .push(Router::with_path("signup").post(signup))
-            .push(Router::with_path("login").post(login))
-            .hoop(auth_handler)
-            .push(
-                Router::with_path("info")
-                    .post(update_user_info)
-                    .push(Router::with_path("<userId>").get(get_user_info))
-                    .push(Router::with_path("avatar").post(upload_avatar)),
-            ),
-    );
+    let router = Router::with_path("chatroom/v1")
+        .get(hello)
+        .push(Router::with_path("verifycode").get(get_verifycode))
+        .push(
+            Router::with_path("user")
+                .push(Router::with_path("signup").post(signup))
+                .push(Router::with_path("login").post(login))
+                .hoop(auth_handler)
+                .push(
+                    Router::with_path("info")
+                        .post(update_user_info)
+                        .push(Router::with_path("<userId>").get(get_user_info))
+                        .push(Router::with_path("avatar").post(upload_avatar)),
+                ),
+        );
 
     Server::new(acceptor).serve(router).await;
 }
@@ -49,17 +53,48 @@ async fn hello(res: &mut Response) {
 }
 
 #[handler]
+async fn get_verifycode(res: &mut Response) -> Result<()> {
+    let vr = gen_register_verifycode().await?;
+    res.render(Json(vr));
+    Ok(())
+}
+
+#[handler]
 async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
-    todo!()
+    log::debug!("new signup: {:?}", req);
+
+    let mut uh = UserHandler::new().await?;
+    let user_signup: UserSignup = req.parse_json().await.unwrap();
+
+    if !user_signup.verify().await? {
+        res.render(StatusError::bad_request().brief("验证码错误"));
+    } else if let Err(e) = uh.signup(&user_signup).await {
+        match e {
+            UserError::UsernameAlreadyExists => {
+                res.render(StatusError::conflict().brief("用户名已存在"));
+            }
+            UserError::Other(e) => {
+                res.render(StatusError::internal_server_error().brief(&e.to_string()));
+            }
+            _ => {
+                res.render(StatusError::internal_server_error().brief("意料外的错误"));
+            }
+        }
+    } else {
+        res.render("注册成功");
+    }
+
+    Ok(())
 }
 
 #[handler]
 async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
-    log::info!("{:?}", req);
+    log::debug!("new login: {:?}", req);
 
-    let uh = UserHandler::new().await;
-    let user: UserLogin = req.parse_json().await.unwrap();
-    if let Err(e) = uh.login(&user).await {
+    let mut uh = UserHandler::new().await?;
+    let user_login: UserLogin = req.parse_json().await.unwrap();
+
+    if let Err(e) = uh.login(&user_login).await {
         match e {
             UserError::UserNotFound => {
                 res.render(StatusError::unauthorized().brief("用户不存在"));
@@ -71,13 +106,13 @@ async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
                 res.render(StatusError::internal_server_error().brief(&e.to_string()));
             }
             _ => {
-                res.render(StatusError::internal_server_error().brief("未知错误"));
+                res.render(StatusError::internal_server_error().brief("意料外的错误"));
             }
         }
     } else {
         let exp = OffsetDateTime::now_utc() + Duration::days(7);
         let claims = JwtClaims {
-            username: user.username,
+            username: user_login.username,
             exp: exp.unix_timestamp(),
         };
         let token = jsonwebtoken::encode(

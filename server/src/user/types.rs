@@ -28,6 +28,15 @@ impl UserLogin {
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
+#[salvo(extract(default_source(from = "body")))]
+pub struct UserSignup {
+    pub username: String,
+    pub password: String,
+    pub uuid: String,
+    pub verifycode: String,
+}
+
+#[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
 pub struct UserInfo {
     pub username: String,
     pub gender: Option<String>,

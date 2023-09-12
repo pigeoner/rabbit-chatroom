@@ -1,9 +1,9 @@
 use sha256::digest;
 
-use crate::user_type::UserLogin;
+use crate::user::types::UserLogin;
 
 impl UserLogin {
-    pub fn get_avatar_file_name(&self) -> String {
+    pub fn cal_avatar_file_name(&self) -> String {
         digest(&self.username)
     }
 }
