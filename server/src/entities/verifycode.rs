@@ -26,13 +26,25 @@ pub async fn gen_verifycode_base64() -> Result<VerirycodeResponse> {
     Ok(VerirycodeResponse::new(uuid.to_string(), cpt_base64))
 }
 
-pub async fn verify(uuid: &str, code: &str) -> Result<bool> {
+pub async fn verify(uuid: &str, code: &str) -> Result<VerifyResult> {
     let mut conn = get_redis_conn().await?;
     let res: Option<String> = conn.get(uuid).await?;
     match res {
-        Some(res) => Ok(res == code.to_lowercase()),
-        None => Ok(false),
+        Some(res) => {
+            if res == code {
+                Ok(VerifyResult::Success)
+            } else {
+                Ok(VerifyResult::Fail)
+            }
+        }
+        None => Ok(VerifyResult::Expired),
     }
+}
+
+pub enum VerifyResult {
+    Success,
+    Fail,
+    Expired,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -48,7 +60,7 @@ impl VerirycodeResponse {
 }
 
 impl UserSignup {
-    pub async fn verify(&self) -> Result<bool> {
+    pub async fn verify(&self) -> Result<VerifyResult> {
         verify(&self.uuid, &self.verifycode).await
     }
 }

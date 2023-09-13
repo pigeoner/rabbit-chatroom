@@ -2,7 +2,6 @@ use anyhow::Result;
 use async_once::AsyncOnce;
 use lazy_static::lazy_static;
 
-use crate::entities::user::types::{User, UserSignup};
 use crate::common::CONFIG;
 
 pub mod prelude {
@@ -35,7 +34,7 @@ lazy_static! {
 async fn init_db(pool: SqlitePool) {
     sqlx::query(
         "CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
+            userid INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             gender TEXT,
@@ -48,8 +47,6 @@ async fn init_db(pool: SqlitePool) {
     .await
     .unwrap();
 }
-
-type SqlxResult<T> = Result<T, SqlxError>;
 
 pub struct SqlModel {
     pub conn: PoolConnection<Sqlite>,

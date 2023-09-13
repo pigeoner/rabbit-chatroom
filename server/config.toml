@@ -2,3 +2,5 @@ database_url = "dev/dev.db"
 avatar_dir = "dev/avatar_dir/"
 jwt_secret = "dev_secret"
 addr_listen = "127.0.0.1:3030"
+
+exp_days = 7

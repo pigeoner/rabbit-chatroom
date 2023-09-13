@@ -1,9 +1,9 @@
-mod jwt;
+mod auth;
 mod user;
 mod utils;
 
-use jwt::JwtClaims;
-use jwt::get_auth_handler;
+use auth::get_auth_handler;
+use auth::JwtClaims;
 
 use salvo::prelude::*;
 
@@ -24,8 +24,9 @@ pub async fn serve() {
                 .hoop(auth_handler)
                 .push(
                     Router::with_path("info")
+                        .get(user::get_self_userinfo)
                         .post(user::update_user_info)
-                        .push(Router::with_path("<userId>").get(user::get_user_info))
+                        .push(Router::with_path("<userId>").get(user::get_userinfo))
                         .push(Router::with_path("avatar").post(user::upload_avatar)),
                 ),
         );

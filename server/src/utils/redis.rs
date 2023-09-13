@@ -1,7 +1,6 @@
 use anyhow::Result;
 use bb8::{Pool, PooledConnection};
-use bb8_redis::{bb8::ManageConnection, RedisConnectionManager};
-use redis::Commands;
+use bb8_redis::RedisConnectionManager;
 
 use async_once::AsyncOnce;
 use lazy_static::lazy_static;

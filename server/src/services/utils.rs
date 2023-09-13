@@ -1,5 +1,5 @@
-use salvo::{writing::Json, Response, prelude::StatusCode};
-use serde::{Serialize, Deserialize};
+use salvo::{prelude::StatusCode, writing::Json, Response};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Msg {

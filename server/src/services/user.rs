@@ -1,23 +1,24 @@
 use anyhow::{anyhow, Result};
 use jsonwebtoken::EncodingKey;
-use salvo::{
-    http::cookie::time::{Duration, OffsetDateTime},
-    prelude::*,
-};
+use salvo::prelude::*;
 
 use crate::{
+    common::CONFIG,
     entities::{
         user::{
             types::{UserError, UserLogin, UserSignup},
             UserHandler,
         },
-        verifycode::gen_verifycode_base64,
+        verifycode::{gen_verifycode_base64, VerifyResult},
     },
-    common::CONFIG, services::utils::RenderMsg,
+    services::auth::TokenResponse,
 };
 
-use super::JwtClaims;
-use super::utils::Msg;
+use super::{
+    auth::{CheckUserAuth, UserAuthState},
+    utils::RenderMsg,
+    JwtClaims,
+};
 
 #[handler]
 pub async fn get_verifycode(res: &mut Response) -> Result<()> {
@@ -33,22 +34,32 @@ pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
 
     log::debug!("new signup: {:?}", user_signup);
 
-    if !user_signup.verify().await? {
-        res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码错误");
-    } else if let Err(e) = uh.signup(&user_signup).await {
-        match e {
-            UserError::UsernameAlreadyExists => {
-                res.render_statuscoded_msg(StatusCode::CONFLICT, "用户名已存在");
-            }
-            UserError::Other(e) => {
-                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-            }
-            _ => {
-                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
-            }
+    match user_signup.verify().await {
+        Err(e) => {
+            res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
         }
-    } else {
-        res.render_msg("注册成功")
+        Ok(VerifyResult::Fail) => {
+            res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码错误");
+        }
+        Ok(VerifyResult::Expired) => {
+            res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码已过期");
+        }
+        Ok(VerifyResult::Success) => match uh.signup(&user_signup).await {
+            Err(e) => match e {
+                UserError::UsernameAlreadyExists => {
+                    res.render_statuscoded_msg(StatusCode::CONFLICT, "用户名已存在");
+                }
+                UserError::Other(e) => {
+                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+                }
+                _ => {
+                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
+                }
+            },
+            Ok(_) => {
+                res.render_msg("注册成功");
+            }
+        },
     };
 
     Ok(())
@@ -61,39 +72,60 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
 
     log::debug!("new login: {:?}", user_login);
 
-    if let Err(e) = uh.login(&user_login).await {
-        match e {
-            UserError::UserNotFound => {
-                res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "用户不存在");
-            }
-            UserError::PasswordNotMatch => {
-                res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "密码错误");
-            }
-            UserError::Other(e) => {
-                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-            }
-            _ => {
-                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
-            }
+    match uh.login(&user_login).await {
+        Err(e) => 
+            match e {
+                UserError::UserNotFound => {
+                    res.render_statuscoded_msg(StatusCode::NOT_FOUND, "用户不存在");
+                }
+                UserError::PasswordNotMatch => {
+                    res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "密码错误");
+                }
+                UserError::Other(e) => {
+                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+                }
+                _ => {
+                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
+                }
         }
-    } else {
-        let exp = OffsetDateTime::now_utc() + Duration::days(7);
-        let claims = JwtClaims {
-            username: user_login.username,
-            exp: exp.unix_timestamp(),
-        };
-        let token = jsonwebtoken::encode(
-            &jsonwebtoken::Header::default(),
-            &claims,
-            &EncodingKey::from_secret(&CONFIG.jwt_secret.as_bytes()),
-        )?;
-        res.render_msg(&token)
+        Ok(userid) => {
+            let claims = JwtClaims::with_exp_days(userid, CONFIG.exp_days);
+            let token = jsonwebtoken::encode(
+                &jsonwebtoken::Header::default(),
+                &claims,
+                &EncodingKey::from_secret(&CONFIG.jwt_secret.as_bytes()),
+            )?;
+            res.render(Json(TokenResponse::new(token)))
+        }
     }
+
     Ok(())
 }
 
 #[handler]
-pub async fn get_user_info(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+pub async fn get_self_userinfo(depot: &mut Depot, res: &mut Response) -> Result<()> {
+    match depot.check_user_auth() {
+        UserAuthState::Authorized(userid) => {
+            let mut uh = UserHandler::new().await?;
+            let user_info = uh.get_userinfo(userid).await?;
+            res.render(Json(user_info))
+        }
+        UserAuthState::Expired => {
+            res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "登录已过期");
+        }
+        UserAuthState::Unauthorized => {
+            res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "未登录");
+        }
+        UserAuthState::Forbidden => {
+            res.render_statuscoded_msg(StatusCode::FORBIDDEN, "无权限");
+        }
+    };
+
+    Ok(())
+}
+
+#[handler]
+pub async fn get_userinfo(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
     todo!()
 }
 

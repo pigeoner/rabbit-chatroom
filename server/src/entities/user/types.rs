@@ -1,4 +1,3 @@
-use derive_builder::Builder;
 use salvo::prelude::*;
 use serde::{Deserialize, Serialize};
 use sqlx::Error as SqlxError;
@@ -6,6 +5,7 @@ use sqlx::FromRow;
 
 #[derive(Serialize, Deserialize, Extractible, Debug, FromRow)]
 pub struct User {
+    pub userid: i32,
     pub username: String,
     pub password: String,
     pub gender: Option<String>,
@@ -37,7 +37,8 @@ pub struct UserSignup {
 }
 
 #[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
-pub struct UserInfo {
+pub struct Userinfo {
+    pub userid: String,
     pub username: String,
     pub gender: Option<String>,
     pub birthdate: Option<String>,
@@ -45,22 +46,10 @@ pub struct UserInfo {
     pub avatar: Option<String>,
 }
 
-impl From<UserLogin> for User {
-    fn from(user_login: UserLogin) -> User {
-        User {
-            username: user_login.username,
-            password: user_login.password,
-            gender: None,
-            birthdate: None,
-            description: None,
-            avatar: None,
-        }
-    }
-}
-
-impl From<User> for UserInfo {
-    fn from(user: User) -> UserInfo {
-        UserInfo {
+impl From<User> for Userinfo {
+    fn from(user: User) -> Userinfo {
+        Userinfo {
+            userid: user.userid.to_string(),
             username: user.username,
             gender: user.gender,
             birthdate: user.birthdate,
@@ -98,6 +87,7 @@ pub enum UserError {
 }
 
 pub type UserResult<T> = Result<T, UserError>;
+pub type Userid = i32;
 
 impl From<SqlxError> for UserError {
     fn from(e: SqlxError) -> Self {
