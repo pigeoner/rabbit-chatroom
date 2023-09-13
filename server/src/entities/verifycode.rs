@@ -6,10 +6,11 @@ use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use uuid::Uuid;
 
-use crate::{user::types::UserSignup, utils::get_redis_conn};
+use super::user::types::UserSignup;
+use crate::utils::get_redis_conn;
 use anyhow::Result;
 
-fn gen_verifycode_base64() -> (String, String) {
+fn _gen_verifycode_base64() -> (String, String) {
     let cpt = gen(Difficulty::Easy);
     let cpt_base64 = cpt.as_base64().unwrap();
     let code = cpt.chars_as_string();
@@ -17,8 +18,8 @@ fn gen_verifycode_base64() -> (String, String) {
     (cpt_base64, code)
 }
 
-pub async fn gen_register_verifycode() -> Result<VerirycodeResponse> {
-    let (cpt_base64, code) = gen_verifycode_base64();
+pub async fn gen_verifycode_base64() -> Result<VerirycodeResponse> {
+    let (cpt_base64, code) = _gen_verifycode_base64();
 
     let uuid = Uuid::new_v4();
 

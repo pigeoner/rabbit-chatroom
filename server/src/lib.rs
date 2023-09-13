@@ -1,9 +1,5 @@
-mod avatar;
-mod config;
-mod db_handler;
-mod server;
-mod user;
+mod entities;
+mod services;
 mod utils;
-mod verifycode;
 
-pub use server::serve;
+pub use services::serve;

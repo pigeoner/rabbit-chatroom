@@ -2,65 +2,31 @@ use anyhow::{anyhow, Result};
 use jsonwebtoken::EncodingKey;
 use salvo::{
     http::cookie::time::{Duration, OffsetDateTime},
-    jwt_auth::{ConstDecoder, HeaderFinder},
     prelude::*,
 };
-use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::CONFIG,
-    user::types::{UserError, UserLogin, UserSignup},
-    user::UserHandler,
-    verifycode::gen_register_verifycode,
+    entities::{
+        user::{
+            types::{UserError, UserLogin, UserSignup},
+            UserHandler,
+        },
+        verifycode::gen_verifycode_base64,
+    },
+    utils::CONFIG,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct JwtClaims {
-    username: String,
-    exp: i64,
-}
-
-pub async fn serve() {
-    let auth_handler: JwtAuth<JwtClaims, _> =
-        JwtAuth::new(ConstDecoder::from_secret(&CONFIG.jwt_secret.as_bytes()))
-            .finders(vec![Box::new(HeaderFinder::new())])
-            .force_passed(true);
-
-    let acceptor = TcpListener::new("127.0.0.1:80").bind().await;
-
-    let router = Router::with_path("chatroom/v1")
-        .get(hello)
-        .push(Router::with_path("verifycode").get(get_verifycode))
-        .push(
-            Router::with_path("user")
-                .push(Router::with_path("signup").post(signup))
-                .push(Router::with_path("login").post(login))
-                .hoop(auth_handler)
-                .push(
-                    Router::with_path("info")
-                        .post(update_user_info)
-                        .push(Router::with_path("<userId>").get(get_user_info))
-                        .push(Router::with_path("avatar").post(upload_avatar)),
-                ),
-        );
-
-    Server::new(acceptor).serve(router).await;
-}
+use super::JwtClaims;
 
 #[handler]
-async fn hello(res: &mut Response) {
-    res.render("hello world");
-}
-
-#[handler]
-async fn get_verifycode(res: &mut Response) -> Result<()> {
-    let vr = gen_register_verifycode().await?;
+pub async fn get_verifycode(res: &mut Response) -> Result<()> {
+    let vr = gen_verifycode_base64().await?;
     res.render(Json(vr));
     Ok(())
 }
 
 #[handler]
-async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
+pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
     log::debug!("new signup: {:?}", req);
 
     let mut uh = UserHandler::new().await?;
@@ -88,7 +54,7 @@ async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
 }
 
 #[handler]
-async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
+pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
     log::debug!("new login: {:?}", req);
 
     let mut uh = UserHandler::new().await?;
@@ -126,16 +92,20 @@ async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
 }
 
 #[handler]
-async fn get_user_info(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+pub async fn get_user_info(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
     todo!()
 }
 
 #[handler]
-async fn update_user_info(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+pub async fn update_user_info(
+    req: &mut Request,
+    depot: &mut Depot,
+    res: &mut Response,
+) -> Result<()> {
     todo!()
 }
 
 #[handler]
-async fn upload_avatar(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+pub async fn upload_avatar(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
     todo!()
 }

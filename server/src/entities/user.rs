@@ -1,22 +1,24 @@
+mod avatar;
+mod sql_model;
+
 pub mod types;
 
 use types::UserError;
 use types::UserLogin;
+use types::UserResult;
+use types::UserSignup;
 
-use crate::db_handler::DBHandler;
+use crate::utils::SqlModel;
 
 use anyhow::{anyhow, Result};
 
-use self::types::UserResult;
-use self::types::UserSignup;
-
 pub struct UserHandler {
-    db_handler: DBHandler,
+    db_handler: SqlModel,
 }
 
 impl UserHandler {
     pub async fn new() -> Result<UserHandler> {
-        let db_handler = DBHandler::new().await?;
+        let db_handler = SqlModel::new().await?;
         Ok(Self { db_handler })
     }
 
