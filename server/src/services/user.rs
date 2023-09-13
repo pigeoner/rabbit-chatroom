@@ -6,7 +6,7 @@ use crate::{
     common::CONFIG,
     entities::{
         user::{
-            types::{UserError, UserLogin, UserSignup},
+            types::{UserError, UserLogin, UserSignup, Userinfo},
             UserHandler,
         },
         verifycode::{gen_verifycode_base64, VerifyResult},
@@ -15,7 +15,6 @@ use crate::{
 };
 
 use super::{
-    auth::{CheckUserAuth, UserAuthState},
     utils::RenderMsg,
     JwtClaims,
 };
@@ -57,7 +56,7 @@ pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
                 }
             },
             Ok(_) => {
-                res.render_msg("注册成功");
+                res.render_msg("ok");
             }
         },
     };
@@ -104,38 +103,53 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
 
 #[handler]
 pub async fn get_self_userinfo(depot: &mut Depot, res: &mut Response) -> Result<()> {
-    match depot.check_user_auth() {
-        UserAuthState::Authorized(userid) => {
-            let mut uh = UserHandler::new().await?;
-            let user_info = uh.get_userinfo(userid).await?;
-            res.render(Json(user_info))
-        }
-        UserAuthState::Expired => {
-            res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "登录已过期");
-        }
-        UserAuthState::Unauthorized => {
-            res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "未登录");
-        }
-        UserAuthState::Forbidden => {
-            res.render_statuscoded_msg(StatusCode::FORBIDDEN, "无权限");
-        }
-    };
+    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+
+    let mut uh = UserHandler::new().await?;
+    let user_info = uh.get_userinfo(userid).await?;
+    res.render(Json(user_info));
 
     Ok(())
 }
 
 #[handler]
 pub async fn get_userinfo(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
-    todo!()
+    let userid: i32 = match req.param("userid") {
+        Some(userid) => userid,
+        None => {
+            res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "无效的userid");
+            return Ok(());
+        }
+    };
+
+    let mut uh = UserHandler::new().await?;
+    let user_info = uh.get_userinfo(userid).await?;
+    res.render(Json(user_info));
+
+    Ok(())
 }
 
 #[handler]
-pub async fn update_user_info(
+pub async fn update_userinfo(
     req: &mut Request,
     depot: &mut Depot,
     res: &mut Response,
 ) -> Result<()> {
-    todo!()
+    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+
+    let mut uh = UserHandler::new().await?;
+    let new_info: Userinfo = req.parse_json().await.unwrap();
+
+    if userid != new_info.userid {
+        res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "无效的userid");
+        return Ok(());
+    }
+
+    uh.update_userinfo(userid, new_info).await?;
+
+    res.render_msg("ok");
+
+    Ok(())
 }
 
 #[handler]

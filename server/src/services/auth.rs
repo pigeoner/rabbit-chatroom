@@ -12,6 +12,8 @@ use anyhow::{anyhow, Result};
 
 use crate::common::CONFIG;
 
+use super::utils::RenderMsg;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
     pub userid: i32,
@@ -45,7 +47,10 @@ impl CheckUserAuth for Depot {
     fn check_user_auth(&self) -> UserAuthState {
         match self.jwt_auth_state() {
             JwtAuthState::Authorized => {
-                let claims = &self.jwt_auth_data::<JwtClaims>().unwrap().claims;
+                let claims = match self.jwt_auth_data::<JwtClaims>() {
+                    Some(data) => &data.claims,
+                    None => return UserAuthState::Unauthorized,
+                };
                 if check_expired(claims.exp) {
                     UserAuthState::Authorized(claims.userid)
                 } else {
@@ -65,6 +70,15 @@ pub enum UserAuthState {
     Forbidden,
 }
 
+impl UserAuthState {
+    pub fn is_authorized(&self) -> bool {
+        match self {
+            UserAuthState::Authorized(_) => true,
+            _ => false,
+        }
+    }
+}
+
 fn check_expired(exp: i64) -> bool {
     let now = OffsetDateTime::now_utc().unix_timestamp();
     now < exp
@@ -79,4 +93,24 @@ impl TokenResponse {
     pub fn new(token: String) -> Self {
         Self { token }
     }
+}
+
+#[handler]
+pub async fn check_user_authed(depot: &mut Depot, res: &mut Response, ctrl: &mut FlowCtrl) -> Result<()> {
+    let auth_state = depot.check_user_auth();
+
+    match auth_state {
+        UserAuthState::Authorized(userid) => {
+            depot.insert("authed_userid", userid);
+        },
+        UserAuthState::Expired => res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "登录已过期"),
+        UserAuthState::Unauthorized => res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "用户未登录"),
+        UserAuthState::Forbidden => res.render_statuscoded_msg(StatusCode::FORBIDDEN, "用户无权限"),
+    };
+
+    if !auth_state.is_authorized() {
+        ctrl.skip_rest();
+    }
+
+    Ok(())
 }

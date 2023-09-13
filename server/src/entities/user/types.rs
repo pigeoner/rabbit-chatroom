@@ -38,7 +38,7 @@ pub struct UserSignup {
 
 #[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
 pub struct Userinfo {
-    pub userid: String,
+    pub userid: i32,
     pub username: String,
     pub gender: Option<String>,
     pub birthdate: Option<String>,
@@ -49,7 +49,7 @@ pub struct Userinfo {
 impl From<User> for Userinfo {
     fn from(user: User) -> Userinfo {
         Userinfo {
-            userid: user.userid.to_string(),
+            userid: user.userid,
             username: user.username,
             gender: user.gender,
             birthdate: user.birthdate,

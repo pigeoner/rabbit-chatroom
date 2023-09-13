@@ -29,6 +29,7 @@ pub async fn gen_verifycode_base64() -> Result<VerirycodeResponse> {
 pub async fn verify(uuid: &str, code: &str) -> Result<VerifyResult> {
     let mut conn = get_redis_conn().await?;
     let res: Option<String> = conn.get(uuid).await?;
+    conn.del(uuid).await?;
     match res {
         Some(res) => {
             if res == code {

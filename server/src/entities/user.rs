@@ -22,12 +22,12 @@ impl UserHandler {
     }
 
     pub async fn signup(&mut self, user_signup: &UserSignup) -> UserResult<()> {
-        self.db_handler.insert_user(user_signup).await?;
+        self.db_handler.insert(user_signup).await?;
         Ok(())
     }
 
     pub async fn login(&mut self, user_login: &UserLogin) -> UserResult<Userid> {
-        let db_user = self.db_handler.get_user_by_name(&user_login.username).await?;
+        let db_user = self.db_handler.select_by_name(&user_login.username).await?;
         match db_user {
             Some(db_user) => {
                 if user_login.validate(&db_user.password) {
@@ -41,7 +41,7 @@ impl UserHandler {
     }
 
     pub async fn get_userinfo(&mut self, userid: i32) -> UserResult<Userinfo> {
-        let db_user = self.db_handler.get_user_by_id(userid).await?;
+        let db_user = self.db_handler.select_by_id(userid).await?;
         match db_user {
             Some(db_user) => Ok(db_user.into()),
             None => Err(UserError::UserNotFound),
@@ -49,10 +49,17 @@ impl UserHandler {
     }
 
     pub async fn get_userinfo_by_name(&mut self, username: &str) -> UserResult<Userinfo> {
-        let db_user = self.db_handler.get_user_by_name(username).await?;
+        let db_user = self.db_handler.select_by_name(username).await?;
         match db_user {
             Some(db_user) => Ok(db_user.into()),
             None => Err(UserError::UserNotFound),
         }
+    }
+
+    pub async fn update_userinfo(&mut self, userid: i32, new_info: Userinfo) -> UserResult<()> {
+        self.db_handler
+            .update_info_by_id(userid, new_info)
+            .await?;
+        Ok(())
     }
 }
