@@ -1,9 +1,6 @@
-use std::sync::Arc;
-
 use captcha::{gen, Difficulty};
 use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
 use uuid::Uuid;
 
 use super::user::types::UserSignup;
@@ -12,8 +9,8 @@ use anyhow::Result;
 
 fn _gen_verifycode_base64() -> (String, String) {
     let cpt = gen(Difficulty::Easy);
-    let cpt_base64 = cpt.as_base64().unwrap();
-    let code = cpt.chars_as_string();
+    let cpt_base64 = "data:image/png;base64,".to_string() + &cpt.as_base64().unwrap();
+    let code = cpt.chars_as_string().to_lowercase();
 
     (cpt_base64, code)
 }
@@ -33,7 +30,7 @@ pub async fn verify(uuid: &str, code: &str) -> Result<bool> {
     let mut conn = get_redis_conn().await?;
     let res: Option<String> = conn.get(uuid).await?;
     match res {
-        Some(res) => Ok(res == code),
+        Some(res) => Ok(res == code.to_lowercase()),
         None => Ok(false),
     }
 }
@@ -52,11 +49,6 @@ impl VerirycodeResponse {
 
 impl UserSignup {
     pub async fn verify(&self) -> Result<bool> {
-        let mut conn = get_redis_conn().await?;
-        let res: Option<String> = conn.get(&self.uuid).await?;
-        match res {
-            Some(res) => Ok(res == self.verifycode),
-            None => Ok(false),
-        }
+        verify(&self.uuid, &self.verifycode).await
     }
 }

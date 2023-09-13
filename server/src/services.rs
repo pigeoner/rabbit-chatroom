@@ -1,15 +1,18 @@
 mod jwt;
 mod user;
+mod utils;
 
 use jwt::JwtClaims;
 use jwt::get_auth_handler;
 
 use salvo::prelude::*;
 
+use crate::common::CONFIG;
+
 pub async fn serve() {
     let auth_handler: JwtAuth<JwtClaims, _> = get_auth_handler();
 
-    let acceptor = TcpListener::new("127.0.0.1:80").bind().await;
+    let acceptor = TcpListener::new(&CONFIG.addr_listen).bind().await;
 
     let router = Router::with_path("chatroom/v1")
         .get(hello)

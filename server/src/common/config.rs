@@ -6,6 +6,7 @@ pub struct Config {
     pub database_url: String,
     pub avatar_dir: String,
     pub jwt_secret: String,
+    pub addr_listen: String,
 }
 
 lazy_static! {

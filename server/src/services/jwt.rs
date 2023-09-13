@@ -1,7 +1,7 @@
 use salvo::{prelude::JwtAuth, jwt_auth::{HeaderFinder, ConstDecoder}};
 use serde::{Deserialize, Serialize};
 
-use crate::utils::CONFIG;
+use crate::common::CONFIG;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {

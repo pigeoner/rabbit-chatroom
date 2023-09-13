@@ -3,7 +3,7 @@ use async_once::AsyncOnce;
 use lazy_static::lazy_static;
 
 use crate::entities::user::types::{User, UserSignup};
-use crate::utils::CONFIG;
+use crate::common::CONFIG;
 
 pub mod prelude {
     pub use sqlx::sqlite::SqliteConnectOptions;
@@ -38,7 +38,10 @@ async fn init_db(pool: SqlitePool) {
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
-            avatar_url TEXT
+            gender TEXT,
+            birthdate TEXT,
+            description TEXT,
+            avatar TEXT
         )",
     )
     .execute(&pool)

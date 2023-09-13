@@ -13,10 +13,11 @@ use crate::{
         },
         verifycode::gen_verifycode_base64,
     },
-    utils::CONFIG,
+    common::CONFIG, services::utils::RenderMsg,
 };
 
 use super::JwtClaims;
+use super::utils::Msg;
 
 #[handler]
 pub async fn get_verifycode(res: &mut Response) -> Result<()> {
@@ -27,52 +28,52 @@ pub async fn get_verifycode(res: &mut Response) -> Result<()> {
 
 #[handler]
 pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
-    log::debug!("new signup: {:?}", req);
-
     let mut uh = UserHandler::new().await?;
     let user_signup: UserSignup = req.parse_json().await.unwrap();
 
+    log::debug!("new signup: {:?}", user_signup);
+
     if !user_signup.verify().await? {
-        res.render(StatusError::bad_request().brief("验证码错误"));
+        res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码错误");
     } else if let Err(e) = uh.signup(&user_signup).await {
         match e {
             UserError::UsernameAlreadyExists => {
-                res.render(StatusError::conflict().brief("用户名已存在"));
+                res.render_statuscoded_msg(StatusCode::CONFLICT, "用户名已存在");
             }
             UserError::Other(e) => {
-                res.render(StatusError::internal_server_error().brief(&e.to_string()));
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
             }
             _ => {
-                res.render(StatusError::internal_server_error().brief("意料外的错误"));
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
             }
         }
     } else {
-        res.render("注册成功");
-    }
+        res.render_msg("注册成功")
+    };
 
     Ok(())
 }
 
 #[handler]
 pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
-    log::debug!("new login: {:?}", req);
-
     let mut uh = UserHandler::new().await?;
     let user_login: UserLogin = req.parse_json().await.unwrap();
+
+    log::debug!("new login: {:?}", user_login);
 
     if let Err(e) = uh.login(&user_login).await {
         match e {
             UserError::UserNotFound => {
-                res.render(StatusError::unauthorized().brief("用户不存在"));
+                res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "用户不存在");
             }
             UserError::PasswordNotMatch => {
-                res.render(StatusError::unauthorized().brief("密码错误"));
+                res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "密码错误");
             }
             UserError::Other(e) => {
-                res.render(StatusError::internal_server_error().brief(&e.to_string()));
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
             }
             _ => {
-                res.render(StatusError::internal_server_error().brief("意料外的错误"));
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
             }
         }
     } else {
@@ -86,7 +87,7 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
             &claims,
             &EncodingKey::from_secret(&CONFIG.jwt_secret.as_bytes()),
         )?;
-        res.render(token);
+        res.render_msg(&token)
     }
     Ok(())
 }
