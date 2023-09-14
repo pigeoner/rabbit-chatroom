@@ -29,7 +29,7 @@ impl JwtClaims {
     }
 }
 
-pub fn get_auth_handler() -> JwtAuth<JwtClaims, ConstDecoder> {
+pub fn get_auth_hoop() -> JwtAuth<JwtClaims, ConstDecoder> {
     JwtAuth::new(ConstDecoder::from_secret(&CONFIG.jwt_secret.as_bytes()))
         .finders(vec![Box::new(HeaderFinder::new())])
         .force_passed(true)

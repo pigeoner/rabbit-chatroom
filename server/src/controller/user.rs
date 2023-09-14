@@ -1,17 +1,20 @@
-mod auth;
 mod handlers;
 
-use self::auth::*;
+use super::auth::*;
 use self::handlers::*;
 use salvo::{prelude::JwtAuth, Router};
 
-pub trait UserController {
+pub trait UserRoute {
+    fn with_user_routes() -> Self;
     fn push_user_routes(self) -> Self;
 }
 
-impl UserController for Router {
+impl UserRoute for Router {
+    fn with_user_routes() -> Self {
+        Router::new().push_user_routes()
+    }
     fn push_user_routes(self) -> Self {
-        let auth_handler: JwtAuth<JwtClaims, _> = get_auth_handler();
+        let auth_hoop: JwtAuth<JwtClaims, _> = get_auth_hoop();
 
         self.push(Router::with_path("verifycode").get(get_verifycode))
             .push(
@@ -20,7 +23,7 @@ impl UserController for Router {
                     .push(Router::with_path("login").post(login))
                     .push(
                         Router::with_path("info")
-                            .hoop(auth_handler)
+                            .hoop(auth_hoop)
                             .hoop(check_user_authed)
                             .get(get_self_userinfo)
                             .post(update_userinfo)

@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
 
-use super::auth::{JwtClaims, TokenResponse};
+use crate::controller::auth::{JwtClaims, TokenResponse};
 use crate::{
     common::CONFIG,
     controller::utils::RenderMsg,

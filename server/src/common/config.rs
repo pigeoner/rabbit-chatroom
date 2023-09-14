@@ -4,9 +4,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub database_url: String,
-    pub avatar_dir: String,
-    pub jwt_secret: String,
     pub addr_listen: String,
+
+    pub image_dir: String,
+    pub avatar_dir: String,
+
+    pub image_url: String,
+
+    pub jwt_secret: String,
+
     pub exp_days: i64,
 }
 
