@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Result};
 
-pub use crate::entity::user::types::{UserError, UserLogin, UserResult, UserSignup,Userid, Userinfo};
+pub use crate::entity::user::types::{
+    UserError, UserLogin, UserResult, UserSignup, Userid, Userinfo,
+};
 use crate::utils::SqlModel;
 
 pub struct UserHandler {

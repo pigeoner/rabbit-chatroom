@@ -1,5 +1,6 @@
 use std::ops::Add;
 
+use anyhow::{anyhow, Result};
 use salvo::{
     http::cookie::time::{Duration, OffsetDateTime},
     jwt_auth::{ConstDecoder, HeaderFinder},
@@ -8,11 +9,8 @@ use salvo::{
 };
 use serde::{Deserialize, Serialize};
 
-use anyhow::{anyhow, Result};
-
 use crate::common::CONFIG;
-
-use super::utils::RenderMsg;
+use crate::controller::utils::RenderMsg;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
