@@ -3,7 +3,7 @@ use redis::AsyncCommands;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::user::types::UserSignup;
+use super::user::UserSignup;
 use crate::utils::get_redis_conn;
 use anyhow::Result;
 

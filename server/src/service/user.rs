@@ -1,15 +1,7 @@
-mod avatar;
-mod sql_model;
-
-pub mod types;
-
-use types::{UserError, UserLogin, UserResult, UserSignup};
-
-use crate::utils::SqlModel;
-
 use anyhow::{anyhow, Result};
 
-use self::types::{Userid, Userinfo};
+pub use crate::entity::user::types::{UserError, UserLogin, UserResult, UserSignup,Userid, Userinfo};
+use crate::utils::SqlModel;
 
 pub struct UserHandler {
     db_handler: SqlModel,

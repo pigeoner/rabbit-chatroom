@@ -1,6 +1,8 @@
-mod common;
-mod entities;
-mod services;
-mod utils;
+mod entity;
+mod controller;
+mod service;
 
-pub use services::serve;
+mod utils;
+mod common;
+
+pub use controller::serve;
