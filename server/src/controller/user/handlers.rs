@@ -2,7 +2,9 @@ use anyhow::{anyhow, Result};
 use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
 
-use crate::controller::auth::{JwtClaims, TokenResponse};
+use crate::controller::auth::JwtClaims;
+use crate::controller::utils::{TokenResponse, UrlResponse};
+use crate::service::avatar::{save_avatar, self};
 use crate::{
     common::CONFIG,
     controller::utils::RenderMsg,
@@ -41,11 +43,8 @@ pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
                 UserError::UsernameAlreadyExists => {
                     res.render_statuscoded_msg(StatusCode::CONFLICT, "用户名已存在");
                 }
-                UserError::Other(e) => {
-                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
                 _ => {
-                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
+                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
                 }
             },
             Ok(_) => {
@@ -72,11 +71,8 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
             UserError::PasswordNotMatch => {
                 res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "密码错误");
             }
-            UserError::Other(e) => {
-                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-            }
             _ => {
-                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
             }
         },
         Ok(userid) => {
@@ -137,7 +133,10 @@ pub async fn update_userinfo(
         return Ok(());
     }
 
-    uh.update_userinfo(userid, new_info).await?;
+    match uh.update_userinfo(userid, new_info).await {
+        Err(e) => res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+        Ok(_) => res.render_msg("ok")
+    };
 
     res.render_msg("ok");
 
@@ -146,5 +145,23 @@ pub async fn update_userinfo(
 
 #[handler]
 pub async fn upload_avatar(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
-    todo!()
+    let avatar_file = match req.file("avatar").await {
+        Some(file) => file,
+        None => {
+            res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "无效的avatar");
+            return Ok(());
+        }
+    };
+    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+
+    match save_avatar(avatar_file, userid).await {
+        Ok(path) => {
+            res.render(Json(UrlResponse::new(path)));
+        }
+        Err(e) => {
+            res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+        }
+    };
+
+    Ok(())
 }

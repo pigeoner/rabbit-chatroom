@@ -82,17 +82,6 @@ fn check_expired(exp: i64) -> bool {
     now < exp
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TokenResponse {
-    pub token: String,
-}
-
-impl TokenResponse {
-    pub fn new(token: String) -> Self {
-        Self { token }
-    }
-}
-
 #[handler]
 pub async fn check_user_authed(
     depot: &mut Depot,

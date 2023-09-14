@@ -54,4 +54,26 @@ impl UserHandler {
         self.db_handler.update_info_by_id(userid, new_info).await?;
         Ok(())
     }
+
+    pub async fn update_password(
+        &mut self,
+        userid: i32,
+        old_password: &str,
+        new_password: &str,
+    ) -> UserResult<()> {
+        let db_user = self.db_handler.select_by_id(userid).await?;
+        match db_user {
+            Some(db_user) => {
+                if db_user.password == old_password {
+                    self.db_handler
+                        .update_password_by_id(userid, new_password)
+                        .await?;
+                    Ok(())
+                } else {
+                    Err(UserError::PasswordNotMatch)
+                }
+            }
+            None => Err(UserError::UserNotFound),
+        }
+    }
 }
