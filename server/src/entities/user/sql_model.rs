@@ -42,7 +42,8 @@ impl SqlModel {
     }
 
     pub async fn update_info_by_id(&mut self, userid: i32, new_info: Userinfo) -> SqlxResult<()> {
-        let query = sqlx::query("
+        let query = sqlx::query(
+            "
 UPDATE users
 SET username = ?2,
     gender = ?3,
@@ -51,7 +52,8 @@ SET username = ?2,
     avatar = ?6
 WHERE
     userid = ?1
-        ")
+        ",
+        )
         .bind(userid)
         .bind(&new_info.username)
         .bind(&new_info.gender)
@@ -59,8 +61,8 @@ WHERE
         .bind(&new_info.description)
         .bind(&new_info.avatar);
 
-    self.conn.execute(query).await?;
+        self.conn.execute(query).await?;
 
-    Ok(())
+        Ok(())
     }
 }

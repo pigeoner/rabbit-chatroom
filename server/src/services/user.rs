@@ -14,10 +14,7 @@ use crate::{
     services::auth::TokenResponse,
 };
 
-use super::{
-    utils::RenderMsg,
-    JwtClaims,
-};
+use super::{utils::RenderMsg, JwtClaims};
 
 #[handler]
 pub async fn get_verifycode(res: &mut Response) -> Result<()> {
@@ -72,21 +69,20 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
     log::debug!("new login: {:?}", user_login);
 
     match uh.login(&user_login).await {
-        Err(e) => 
-            match e {
-                UserError::UserNotFound => {
-                    res.render_statuscoded_msg(StatusCode::NOT_FOUND, "用户不存在");
-                }
-                UserError::PasswordNotMatch => {
-                    res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "密码错误");
-                }
-                UserError::Other(e) => {
-                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
-                _ => {
-                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
-                }
-        }
+        Err(e) => match e {
+            UserError::UserNotFound => {
+                res.render_statuscoded_msg(StatusCode::NOT_FOUND, "用户不存在");
+            }
+            UserError::PasswordNotMatch => {
+                res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "密码错误");
+            }
+            UserError::Other(e) => {
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            }
+            _ => {
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, "意料外的错误");
+            }
+        },
         Ok(userid) => {
             let claims = JwtClaims::with_exp_days(userid, CONFIG.exp_days);
             let token = jsonwebtoken::encode(

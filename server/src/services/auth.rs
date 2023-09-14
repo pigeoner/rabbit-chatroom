@@ -96,15 +96,23 @@ impl TokenResponse {
 }
 
 #[handler]
-pub async fn check_user_authed(depot: &mut Depot, res: &mut Response, ctrl: &mut FlowCtrl) -> Result<()> {
+pub async fn check_user_authed(
+    depot: &mut Depot,
+    res: &mut Response,
+    ctrl: &mut FlowCtrl,
+) -> Result<()> {
     let auth_state = depot.check_user_auth();
 
     match auth_state {
         UserAuthState::Authorized(userid) => {
             depot.insert("authed_userid", userid);
-        },
-        UserAuthState::Expired => res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "登录已过期"),
-        UserAuthState::Unauthorized => res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "用户未登录"),
+        }
+        UserAuthState::Expired => {
+            res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "登录已过期")
+        }
+        UserAuthState::Unauthorized => {
+            res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "用户未登录")
+        }
         UserAuthState::Forbidden => res.render_statuscoded_msg(StatusCode::FORBIDDEN, "用户无权限"),
     };
 

@@ -9,7 +9,7 @@ use crate::utils::SqlModel;
 
 use anyhow::{anyhow, Result};
 
-use self::types::{Userinfo, Userid};
+use self::types::{Userid, Userinfo};
 
 pub struct UserHandler {
     db_handler: SqlModel,
@@ -57,9 +57,7 @@ impl UserHandler {
     }
 
     pub async fn update_userinfo(&mut self, userid: i32, new_info: Userinfo) -> UserResult<()> {
-        self.db_handler
-            .update_info_by_id(userid, new_info)
-            .await?;
+        self.db_handler.update_info_by_id(userid, new_info).await?;
         Ok(())
     }
 }
