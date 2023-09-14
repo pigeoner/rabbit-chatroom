@@ -17,6 +17,7 @@ impl ImageRoute for Router {
     fn push_image_routes(self) -> Self {
         let path = CONFIG.image_url.clone() + "<*+img_path>";
 
-        self.hoop_auth().push(Router::with_path(path).get(StaticDir::new(CONFIG.image_dir.clone())))
+        self.hoop_auth()
+            .push(Router::with_path(path).get(StaticDir::new(CONFIG.image_dir.clone())))
     }
 }

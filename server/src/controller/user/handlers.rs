@@ -4,7 +4,7 @@ use salvo::prelude::*;
 
 use crate::controller::auth::JwtClaims;
 use crate::controller::utils::{TokenResponse, UrlResponse};
-use crate::service::avatar::{save_avatar, self};
+use crate::service::avatar::{self, save_avatar};
 use crate::{
     common::CONFIG,
     controller::utils::RenderMsg,
@@ -135,7 +135,7 @@ pub async fn update_userinfo(
 
     match uh.update_userinfo(userid, new_info).await {
         Err(e) => res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
-        Ok(_) => res.render_msg("ok")
+        Ok(_) => res.render_msg("ok"),
     };
 
     res.render_msg("ok");

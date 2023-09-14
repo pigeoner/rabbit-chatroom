@@ -1,12 +1,12 @@
+mod auth;
 mod image;
 mod user;
-mod auth;
 
 mod utils;
 
 use salvo::prelude::*;
 
-use self::{user::UserRoute, image::ImageRoute};
+use self::{image::ImageRoute, user::UserRoute};
 use crate::common::CONFIG;
 
 pub async fn serve() {

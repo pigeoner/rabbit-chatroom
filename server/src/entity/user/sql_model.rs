@@ -42,7 +42,8 @@ impl SqlModel {
     }
 
     pub async fn update_info_by_id(&mut self, userid: i32, new_info: Userinfo) -> SqlxResult<()> {
-        let query = sqlx::query("
+        let query = sqlx::query(
+            "
             UPDATE users
             SET username = ?2,
                 gender = ?3,
@@ -65,7 +66,11 @@ impl SqlModel {
         Ok(())
     }
 
-    pub async fn update_password_by_id(&mut self, userid: i32, new_password: &str) -> SqlxResult<()> {
+    pub async fn update_password_by_id(
+        &mut self,
+        userid: i32,
+        new_password: &str,
+    ) -> SqlxResult<()> {
         let query = sqlx::query("UPDATE users SET password = ?2 WHERE userid = ?1")
             .bind(userid)
             .bind(new_password);

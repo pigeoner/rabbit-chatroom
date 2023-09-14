@@ -1,7 +1,7 @@
 mod handlers;
 
-use super::auth::*;
 use self::handlers::*;
+use super::auth::*;
 use salvo::{prelude::JwtAuth, Router};
 
 pub trait UserRoute {
