@@ -14,8 +14,6 @@ impl UserRoute for Router {
         Router::new().push_user_routes()
     }
     fn push_user_routes(self) -> Self {
-        let auth_hoop: JwtAuth<JwtClaims, _> = get_auth_hoop();
-
         self.push(Router::with_path("verifycode").get(get_verifycode))
             .push(
                 Router::with_path("user")
@@ -23,8 +21,7 @@ impl UserRoute for Router {
                     .push(Router::with_path("login").post(login))
                     .push(
                         Router::with_path("info")
-                            .hoop(auth_hoop)
-                            .hoop(check_user_authed)
+                            .hoop_auth()
                             .get(get_self_userinfo)
                             .post(update_userinfo)
                             .push(Router::with_path("<userid:num>").get(get_userinfo))

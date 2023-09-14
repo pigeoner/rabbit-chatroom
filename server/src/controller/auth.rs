@@ -120,3 +120,14 @@ pub async fn check_user_authed(
 
     Ok(())
 }
+
+pub trait HoopAuth {
+    fn hoop_auth(self) -> Self;
+}
+
+impl HoopAuth for Router {
+    fn hoop_auth(self) -> Self {
+        let auth_hoop: JwtAuth<JwtClaims, _> = get_auth_hoop();
+        self.hoop(auth_hoop).hoop(check_user_authed)
+    }
+}
