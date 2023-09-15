@@ -42,7 +42,8 @@ pub async fn verify(uuid: &str, code: &str) -> Result<VerifycodeStatus> {
     }
 }
 
-pub enum VerifycodeStatus { //TODO: 修改为VerifycodeResult，更改返回的模式
+pub enum VerifycodeStatus {
+    //TODO: 修改为VerifycodeResult，更改返回的模式
     Success,
     Fail,
     Expired,

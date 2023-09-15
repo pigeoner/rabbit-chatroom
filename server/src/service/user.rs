@@ -1,9 +1,7 @@
-use anyhow::Result;
 use crate::entity::types::SqlxError;
+use anyhow::Result;
 
-pub use crate::entity::user::types::{
-    UserLogin, UserSignup, Userinfo,
-};
+pub use crate::entity::user::types::{UserLogin, UserSignup, Userinfo};
 use crate::utils::SqlModel;
 
 pub struct UserHandler {

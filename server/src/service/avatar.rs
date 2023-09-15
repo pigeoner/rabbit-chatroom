@@ -11,18 +11,17 @@ pub struct AvatarHandler {}
 impl AvatarHandler {
     pub fn save_avatar(file: &FilePart, userid: i32) -> AvatarResult<Url> {
         let img = image::open(file.path()).map_err(|_| AvatarError::UnacceptedImageFormat)?;
-    
+
         let (width, height) = (img.width(), img.height());
         if width != height {
             return Err(AvatarError::WidthNotEqualHeight);
         }
-        
+
         let userid = Userid(userid);
         save_avatar(img, userid.to_path())?;
-    
+
         Ok(userid.to_url())
     }
-    
 }
 
 struct Userid(i32);
@@ -45,7 +44,7 @@ pub enum AvatarError {
     WidthNotEqualHeight,
     #[error("其他错误：{0}")]
     Other(anyhow::Error),
-} 
+}
 
 pub type AvatarResult<T> = Result<T, AvatarError>;
 

@@ -72,5 +72,3 @@ impl GetUserLoginFields for UserLogin {
         &self.password
     }
 }
-
-

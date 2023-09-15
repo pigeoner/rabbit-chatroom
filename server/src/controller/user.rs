@@ -1,9 +1,12 @@
 mod handlers;
 
-use crate::service::{user::UserError, avatar::AvatarError};
+use crate::service::{avatar::AvatarError, user::UserError};
 
 use self::handlers::*;
-use super::{auth::*, utils::{RenderError, RenderMsg}};
+use super::{
+    auth::*,
+    utils::{RenderError, RenderMsg},
+};
 use salvo::prelude::*;
 
 pub trait UserRoute {

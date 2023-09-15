@@ -8,7 +8,8 @@ use crate::common::CONFIG;
 pub fn save_avatar(image: DynamicImage, path: String) -> Result<()> {
     let dest = path_to_dest(path);
 
-    image.save_with_format(dest, image::ImageFormat::Png)
+    image
+        .save_with_format(dest, image::ImageFormat::Png)
         .map_err(|e| anyhow!("save image failed: {}", e))
 }
 
