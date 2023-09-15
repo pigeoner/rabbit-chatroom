@@ -6,10 +6,15 @@ pub struct Config {
     pub database_url: String,
     pub addr_listen: String,
 
+    pub static_dir: String,
     pub image_dir: String,
     pub avatar_dir: String,
 
-    pub image_url: String,
+    pub static_url: String,
+
+    pub avatar_width: u32,
+    pub avatar_mini_width: u32,
+    pub avatar_quality: u8,
 
     pub jwt_secret: String,
 

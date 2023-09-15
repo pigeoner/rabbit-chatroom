@@ -17,12 +17,12 @@ jsonwebtoken = "8.3.0"
 lazy_static = "1.4.0"
 log = "0.4.20"
 redis = "0.23.3"
-salvo = { version = "0.54.3", features = ["jwt-auth", "anyhow", "serve-static"] }
+salvo = { version = "0.55.3", features = ["jwt-auth", "anyhow", "serve-static"] }
 serde = { version = "1.0.188", features = ["derive"] }
 sha256 = "1.4.0"
 sqlx = { version = "0.7.1", features = ["sqlite", "runtime-tokio"] }
 thiserror = "1.0.48"
 tokio = { version = "1.32.0", features = ["macros", "fs"] }
-toml = "0.7.8"
+toml = "0.8.0"
 tracing-subscriber = "0.3.17"
 uuid = { version = "1.4.1", features = ["v4"] }

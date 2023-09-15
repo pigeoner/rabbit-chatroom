@@ -1,12 +1,15 @@
 database_url = "dev/dev.db"
 addr_listen = "127.0.0.1:3030"
 
-image_dir = "dev/img/"
+static_dir = "dev/static/"
+image_dir = "img/"
 avatar_dir = "avatar/"
 
-image_url = "img/"
+static_url = "static"
 
 avatar_width = 640
+avatar_mini_width = 64
+avatar_quality = 80
 
 jwt_secret = "dev_secret"
 

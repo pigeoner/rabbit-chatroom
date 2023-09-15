@@ -45,6 +45,12 @@ pub struct Userinfo {
     pub avatar: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
+#[salvo(extract(default_source(from = "body")))]
+pub struct Username {
+    pub username: String,
+}
+
 impl From<User> for Userinfo {
     fn from(user: User) -> Userinfo {
         Userinfo {
