@@ -1,6 +1,6 @@
-use crate::entity::types::SqlxError;
 use anyhow::Result;
 
+use crate::entity::types::SqlxError;
 pub use crate::entity::user::types::{UserLogin, UserSignup, Userinfo};
 use crate::utils::SqlModel;
 

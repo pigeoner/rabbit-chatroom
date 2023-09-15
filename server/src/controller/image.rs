@@ -3,7 +3,7 @@ use salvo::serve_static::StaticDir;
 
 use crate::common::CONFIG;
 
-use super::auth::{get_auth_hoop, HoopAuth};
+use super::auth::HoopAuth;
 
 pub trait ImageRoute {
     fn with_image_routes() -> Self;

@@ -26,27 +26,37 @@ pub async fn gen_verifycode_base64() -> Result<VerirycodeResponse> {
     Ok(VerirycodeResponse::new(uuid.to_string(), cpt_base64))
 }
 
-pub async fn verify(uuid: &str, code: &str) -> Result<VerifycodeStatus> {
+pub async fn verify(uuid: &str, code: &str) -> VerifyCodeResult<()> {
     let mut conn = get_redis_conn().await?;
     let res: Option<String> = conn.get(uuid).await?;
     conn.del(uuid).await?;
     match res {
-        Some(res) => {
-            if res == code {
-                Ok(VerifycodeStatus::Success)
+        Some(c) => {
+            if c == code {
+                Ok(())
             } else {
-                Ok(VerifycodeStatus::Fail)
+                Err(VerifycodeError::Wrong)
             }
         }
-        None => Ok(VerifycodeStatus::Expired),
+        None => Err(VerifycodeError::Expired),
     }
 }
 
-pub enum VerifycodeStatus {
-    //TODO: 修改为VerifycodeResult，更改返回的模式
-    Success,
-    Fail,
+pub type VerifyCodeResult<T> = Result<T, VerifycodeError>;
+#[derive(thiserror::Error, Debug)]
+pub enum VerifycodeError {
+    #[error("验证码错误")]
+    Wrong,
+    #[error("验证码已过期")]
     Expired,
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
+}
+
+impl From<redis::RedisError> for VerifycodeError {
+    fn from(e: redis::RedisError) -> Self {
+        Self::Other(e.into())
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -62,7 +72,7 @@ impl VerirycodeResponse {
 }
 
 impl UserSignup {
-    pub async fn verify(&self) -> Result<VerifycodeStatus> {
+    pub async fn verify(&self) -> VerifyCodeResult<()> {
         verify(&self.uuid, &self.verifycode).await
     }
 }

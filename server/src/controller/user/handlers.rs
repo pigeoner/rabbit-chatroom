@@ -1,17 +1,17 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
 
-use super::RenderError;
-use crate::controller::auth::JwtClaims;
-use crate::controller::utils::{TokenResponse, UrlResponse};
-use crate::service::avatar::{self, AvatarHandler};
+use super::{
+    auth::JwtClaims,
+    utils::{RenderError, RenderMsg, TokenResponse, UrlResponse},
+};
 use crate::{
     common::CONFIG,
-    controller::utils::RenderMsg,
     service::{
-        user::{UserError, UserHandler, UserLogin, UserSignup, Userinfo},
-        verifycode::{gen_verifycode_base64, VerifycodeStatus},
+        avatar::AvatarHandler,
+        user::{UserHandler, UserLogin, UserSignup, Userinfo},
+        verifycode::gen_verifycode_base64,
     },
 };
 
@@ -31,16 +31,10 @@ pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
 
     match user_signup.verify().await {
         Err(e) => {
-            res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
+            res.render_error(e);
         }
-        Ok(VerifycodeStatus::Fail) => {
-            res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码错误");
-        }
-        Ok(VerifycodeStatus::Expired) => {
-            res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码已过期");
-        }
-        Ok(VerifycodeStatus::Success) => match uh.signup(&user_signup).await {
-            Err(e) => e.render_error(res),
+        Ok(_) => match uh.signup(&user_signup).await {
+            Err(e) => res.render_error(e),
             Ok(_) => {
                 res.render_msg("ok");
             }
@@ -58,7 +52,7 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
     log::debug!("new login: {:?}", user_login);
 
     match uh.login(&user_login).await {
-        Err(e) => e.render_error(res),
+        Err(e) => res.render_error(e),
         Ok(userid) => {
             let claims = JwtClaims::with_exp_days(userid, CONFIG.exp_days);
             let token = jsonwebtoken::encode(
@@ -85,7 +79,7 @@ pub async fn get_self_userinfo(depot: &mut Depot, res: &mut Response) -> Result<
 }
 
 #[handler]
-pub async fn get_userinfo(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
+pub async fn get_userinfo(req: &mut Request, res: &mut Response) -> Result<()> {
     let userid: i32 = match req.param("userid") {
         Some(userid) => userid,
         None => {

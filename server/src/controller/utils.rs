@@ -55,10 +55,15 @@ impl UrlResponse {
     }
 }
 
-pub trait RenderError {
-    fn render_error(&self, res: &mut Response);
+pub trait ErrorRender: std::error::Error {
+    fn error_render(&self, res: &mut Response);
 }
 
-pub trait RenderErrorThen {
-    fn render_error_then(&self, res: &mut Response, then: impl FnOnce());
+pub trait RenderError {
+    fn render_error<E: ErrorRender>(&mut self, e: E);
+}
+impl RenderError for Response {
+    fn render_error<E: ErrorRender>(&mut self, e: E) {
+        e.error_render(self);
+    }
 }

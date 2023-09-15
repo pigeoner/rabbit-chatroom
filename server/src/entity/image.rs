@@ -1,7 +1,6 @@
-use anyhow::Result;
-use image::DynamicImage;
+use anyhow::{anyhow, Result};
 
-use anyhow::anyhow;
+use image::DynamicImage;
 
 use crate::common::CONFIG;
 
