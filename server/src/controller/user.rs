@@ -1,8 +1,10 @@
 mod handlers;
 
+use crate::service::{user::UserError, avatar::AvatarError};
+
 use self::handlers::*;
-use super::auth::*;
-use salvo::{prelude::JwtAuth, Router};
+use super::{auth::*, utils::{RenderError, RenderMsg}};
+use salvo::prelude::*;
 
 pub trait UserRoute {
     fn with_user_routes() -> Self;
@@ -28,5 +30,42 @@ impl UserRoute for Router {
                             .push(Router::with_path("avatar").post(upload_avatar)),
                     ),
             )
+    }
+}
+
+impl RenderError for UserError {
+    fn render_error(&self, res: &mut Response) {
+        match self {
+            UserError::UsernameAlreadyExists => {
+                res.render_statuscoded_msg(StatusCode::CONFLICT, "用户名已存在");
+            }
+            UserError::UserNotFound => {
+                res.render_statuscoded_msg(StatusCode::NOT_FOUND, "用户不存在");
+            }
+            UserError::PasswordNotMatch => {
+                res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "密码错误");
+            }
+
+            _ => {
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &self.to_string());
+            }
+        }
+    }
+}
+
+impl RenderError for AvatarError {
+    fn render_error(&self, res: &mut Response) {
+        match self {
+            AvatarError::WidthNotEqualHeight => {
+                res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "图片宽高不相等");
+            }
+            AvatarError::UnacceptedImageFormat => {
+                res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "不支持的图片格式");
+            }
+
+            _ => {
+                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &self.to_string());
+            }
+        }
     }
 }

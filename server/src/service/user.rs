@@ -1,7 +1,8 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
+use crate::entity::types::SqlxError;
 
 pub use crate::entity::user::types::{
-    UserError, UserLogin, UserResult, UserSignup, Userid, Userinfo,
+    UserLogin, UserSignup, Userinfo,
 };
 use crate::utils::SqlModel;
 
@@ -74,6 +75,37 @@ impl UserHandler {
                 }
             }
             None => Err(UserError::UserNotFound),
+        }
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum UserError {
+    #[error("用户不存在")]
+    UserNotFound,
+    #[error("密码错误")]
+    PasswordNotMatch,
+    #[error("用户名已存在")]
+    UsernameAlreadyExists,
+    #[error("其他错误：{0}")]
+    Other(anyhow::Error),
+}
+
+pub type UserResult<T> = Result<T, UserError>;
+type Userid = i32;
+
+impl From<SqlxError> for UserError {
+    fn from(e: SqlxError) -> Self {
+        match e {
+            SqlxError::RowNotFound => UserError::UserNotFound,
+            SqlxError::Database(db_err) => {
+                if db_err.is_unique_violation() {
+                    UserError::UsernameAlreadyExists
+                } else {
+                    UserError::Other(anyhow::Error::from(db_err))
+                }
+            }
+            _ => UserError::Other(anyhow::Error::from(e)),
         }
     }
 }

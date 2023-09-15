@@ -6,6 +6,8 @@ avatar_dir = "avatar/"
 
 image_url = "img/"
 
+avatar_width = 640
+
 jwt_secret = "dev_secret"
 
 exp_days = 7

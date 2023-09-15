@@ -1,15 +1,17 @@
 use anyhow::Result;
-use salvo::http::form::FilePart;
-use tokio::fs;
+use image::DynamicImage;
 
 use anyhow::anyhow;
 
 use crate::common::CONFIG;
 
-pub async fn save_image(file: &FilePart, dest: &str) -> Result<()> {
-    let dest = format!("{}{}", CONFIG.image_dir, dest);
+pub fn save_avatar(image: DynamicImage, path: String) -> Result<()> {
+    let dest = path_to_dest(path);
 
-    fs::copy(file.path(), dest).await?;
+    image.save_with_format(dest, image::ImageFormat::Png)
+        .map_err(|e| anyhow!("save image failed: {}", e))
+}
 
-    Ok(())
+pub fn path_to_dest(path: String) -> String {
+    format!("{}{}", CONFIG.image_dir, path)
 }

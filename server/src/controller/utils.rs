@@ -54,3 +54,11 @@ impl UrlResponse {
         Self { url }
     }
 }
+
+pub trait RenderError {
+    fn render_error(&self, res: &mut Response);
+}
+
+pub trait RenderErrorThen {
+    fn render_error_then(&self, res: &mut Response, then: impl FnOnce());
+}

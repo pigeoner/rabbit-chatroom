@@ -2,15 +2,16 @@ use anyhow::{anyhow, Result};
 use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
 
+use super::RenderError;
 use crate::controller::auth::JwtClaims;
 use crate::controller::utils::{TokenResponse, UrlResponse};
-use crate::service::avatar::{self, save_avatar};
+use crate::service::avatar::{self, AvatarHandler};
 use crate::{
     common::CONFIG,
     controller::utils::RenderMsg,
     service::{
         user::{UserError, UserHandler, UserLogin, UserSignup, Userinfo},
-        verifycode::{gen_verifycode_base64, VerifyResult},
+        verifycode::{gen_verifycode_base64, VerifycodeStatus},
     },
 };
 
@@ -32,21 +33,14 @@ pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
         Err(e) => {
             res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
         }
-        Ok(VerifyResult::Fail) => {
+        Ok(VerifycodeStatus::Fail) => {
             res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码错误");
         }
-        Ok(VerifyResult::Expired) => {
+        Ok(VerifycodeStatus::Expired) => {
             res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "验证码已过期");
         }
-        Ok(VerifyResult::Success) => match uh.signup(&user_signup).await {
-            Err(e) => match e {
-                UserError::UsernameAlreadyExists => {
-                    res.render_statuscoded_msg(StatusCode::CONFLICT, "用户名已存在");
-                }
-                _ => {
-                    res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-                }
-            },
+        Ok(VerifycodeStatus::Success) => match uh.signup(&user_signup).await {
+            Err(e) => e.render_error(res),
             Ok(_) => {
                 res.render_msg("ok");
             }
@@ -64,17 +58,7 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
     log::debug!("new login: {:?}", user_login);
 
     match uh.login(&user_login).await {
-        Err(e) => match e {
-            UserError::UserNotFound => {
-                res.render_statuscoded_msg(StatusCode::NOT_FOUND, "用户不存在");
-            }
-            UserError::PasswordNotMatch => {
-                res.render_statuscoded_msg(StatusCode::UNAUTHORIZED, "密码错误");
-            }
-            _ => {
-                res.render_statuscoded_msg(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string());
-            }
-        },
+        Err(e) => e.render_error(res),
         Ok(userid) => {
             let claims = JwtClaims::with_exp_days(userid, CONFIG.exp_days);
             let token = jsonwebtoken::encode(
@@ -154,7 +138,7 @@ pub async fn upload_avatar(req: &mut Request, depot: &mut Depot, res: &mut Respo
     };
     let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
 
-    match save_avatar(avatar_file, userid).await {
+    match AvatarHandler::save_avatar(avatar_file, userid) {
         Ok(path) => {
             res.render(Json(UrlResponse::new(path)));
         }

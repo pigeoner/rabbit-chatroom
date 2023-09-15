@@ -26,23 +26,23 @@ pub async fn gen_verifycode_base64() -> Result<VerirycodeResponse> {
     Ok(VerirycodeResponse::new(uuid.to_string(), cpt_base64))
 }
 
-pub async fn verify(uuid: &str, code: &str) -> Result<VerifyResult> {
+pub async fn verify(uuid: &str, code: &str) -> Result<VerifycodeStatus> {
     let mut conn = get_redis_conn().await?;
     let res: Option<String> = conn.get(uuid).await?;
     conn.del(uuid).await?;
     match res {
         Some(res) => {
             if res == code {
-                Ok(VerifyResult::Success)
+                Ok(VerifycodeStatus::Success)
             } else {
-                Ok(VerifyResult::Fail)
+                Ok(VerifycodeStatus::Fail)
             }
         }
-        None => Ok(VerifyResult::Expired),
+        None => Ok(VerifycodeStatus::Expired),
     }
 }
 
-pub enum VerifyResult {
+pub enum VerifycodeStatus { //TODO: 修改为VerifycodeResult，更改返回的模式
     Success,
     Fail,
     Expired,
@@ -61,7 +61,7 @@ impl VerirycodeResponse {
 }
 
 impl UserSignup {
-    pub async fn verify(&self) -> Result<VerifyResult> {
+    pub async fn verify(&self) -> Result<VerifycodeStatus> {
         verify(&self.uuid, &self.verifycode).await
     }
 }
