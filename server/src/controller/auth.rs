@@ -26,7 +26,8 @@ impl JwtClaims {
     pub fn new(userid: i32) -> Self {
         Self {
             userid,
-            exp: OffsetDateTime::now_utc().unix_timestamp() + Duration::days(CONFIG.exp_days).whole_seconds(),
+            exp: OffsetDateTime::now_utc().unix_timestamp()
+                + Duration::days(CONFIG.exp_days).whole_seconds(),
             uuid: uuid::Uuid::new_v4().to_string(),
         }
     }
@@ -35,14 +36,14 @@ impl JwtClaims {
     // fn check_expired(&self) -> bool {
     //     let exp = self.exp;
     //     let now = OffsetDateTime::now_utc().unix_timestamp();
-    
+
     //     now < exp
     // }
-    
+
     async fn check_valid(&self) -> Result<bool> {
         let mut conn = get_redis_conn().await?;
         let uuid: Option<String> = conn.get(self.userid).await?;
-    
+
         match uuid {
             Some(uuid) => Ok(uuid == self.uuid),
             None => Ok(false),
@@ -75,7 +76,6 @@ async fn check_user_auth(depot: &mut Depot) -> Result<UserAuthState> {
         JwtAuthState::Forbidden => Ok(UserAuthState::Forbidden),
     }
 }
-
 
 pub enum UserAuthState {
     Authorized(Userid),

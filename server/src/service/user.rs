@@ -1,9 +1,9 @@
 use anyhow::Result;
 use redis::AsyncCommands;
 
-use crate::{entity::types::SqlxError, utils::get_redis_conn};
 pub use crate::entity::user::types::{UserLogin, UserSignup, UserUpdatePwd, Userinfo};
 use crate::utils::SqlModel;
+use crate::{entity::types::SqlxError, utils::get_redis_conn};
 
 pub struct UserHandler {
     db_handler: SqlModel,
