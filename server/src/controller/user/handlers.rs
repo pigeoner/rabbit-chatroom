@@ -1,18 +1,13 @@
 use anyhow::Result;
-use jsonwebtoken::EncodingKey;
 use salvo::prelude::*;
 
-use super::{
-    auth::JwtClaims,
-    utils::{render_error, RenderError, RenderMsg, TokenResponse},
-};
+use super::utils::{render_error, RenderError, RenderMsg, TokenResponse};
 use crate::{
-    common::CONFIG,
-    controller::utils::BadRequest,
+    controller::{auth::sign_token, utils::BadRequest},
     entity::user::types::Username,
     service::{
         avatar::AvatarHandler,
-        user::{UserHandler, UserLogin, UserSignup, Userinfo},
+        user::{UserHandler, UserLogin, UserSignup, UserUpdatePwd, Userinfo},
         verifycode::gen_verifycode_base64,
     },
 };
@@ -47,16 +42,7 @@ pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
     log::debug!("new login: {:?}", user_login);
 
     let userid = render_error!(res, uh.login(&user_login).await);
-    let claims = JwtClaims::with_exp_days(userid, CONFIG.exp_days);
-    let token = render_error!(
-        res,
-        jsonwebtoken::encode(
-            &jsonwebtoken::Header::default(),
-            &claims,
-            &EncodingKey::from_secret(&CONFIG.jwt_secret.as_bytes()),
-        )
-        .map_err(anyhow::Error::from)
-    );
+    let token = render_error!(res, sign_token(userid).await);
 
     res.render(Json(TokenResponse::new(token)));
 
@@ -119,6 +105,29 @@ pub async fn update_userinfo(
     }
 
     render_error!(res, uh.update_userinfo(userid, new_info).await);
+
+    res.render_ok();
+
+    Ok(())
+}
+
+#[handler]
+pub async fn update_password(
+    req: &mut Request,
+    depot: &mut Depot,
+    res: &mut Response,
+) -> Result<()> {
+    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+
+    let uup: UserUpdatePwd = render_error!(res, req.parse_json().await);
+
+    if userid != uup.userid {
+        res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "无效的userid");
+        return Ok(());
+    }
+
+    let mut uh = render_error!(res, UserHandler::new().await);
+    render_error!(res, uh.update_password(uup).await);
 
     res.render_ok();
 

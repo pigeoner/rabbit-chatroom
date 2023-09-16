@@ -1,7 +1,7 @@
 use image::{codecs::jpeg::JpegEncoder, DynamicImage};
 use salvo::http::form::FilePart;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use tokio::task::spawn_blocking;
 
 use crate::{common::CONFIG, entity::image::save_image_data};

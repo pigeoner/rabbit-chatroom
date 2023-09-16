@@ -51,6 +51,14 @@ pub struct Username {
     pub username: String,
 }
 
+#[derive(Serialize, Deserialize, Extractible, Debug, Clone)]
+#[salvo(extract(default_source(from = "body")))]
+pub struct UserUpdatePwd {
+    pub userid: i32,
+    pub old_password: String,
+    pub new_password: String,
+}
+
 impl From<User> for Userinfo {
     fn from(user: User) -> Userinfo {
         Userinfo {

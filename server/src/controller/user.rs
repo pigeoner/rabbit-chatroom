@@ -5,7 +5,7 @@ use salvo::prelude::*;
 use crate::service::{avatar::AvatarError, user::UserError, verifycode::VerifycodeError};
 
 use super::{
-    auth::{self, HoopAuth},
+    auth::HoopAuth,
     utils::{self, ErrorRender, RenderMsg},
 };
 
@@ -31,8 +31,10 @@ impl UserRoute for Router {
                             .hoop_auth()
                             .get(get_self_userinfo)
                             .post(update_userinfo)
+                            .push(Router::with_path("byname").post(get_userinfo_by_name))
                             .push(Router::with_path("<userid:num>").get(get_userinfo))
-                            .push(Router::with_path("avatar").post(upload_avatar)),
+                            .push(Router::with_path("avatar").post(upload_avatar))
+                            .push(Router::with_path("password").post(update_password)),
                     ),
             )
     }

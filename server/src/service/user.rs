@@ -1,7 +1,8 @@
 use anyhow::Result;
+use redis::AsyncCommands;
 
-use crate::entity::types::SqlxError;
-pub use crate::entity::user::types::{UserLogin, UserSignup, Userinfo};
+use crate::{entity::types::SqlxError, utils::get_redis_conn};
+pub use crate::entity::user::types::{UserLogin, UserSignup, UserUpdatePwd, Userinfo};
 use crate::utils::SqlModel;
 
 pub struct UserHandler {
@@ -54,19 +55,18 @@ impl UserHandler {
         Ok(())
     }
 
-    pub async fn update_password(
-        &mut self,
-        userid: i32,
-        old_password: &str,
-        new_password: &str,
-    ) -> UserResult<()> {
-        let db_user = self.db_handler.select_by_id(userid).await?;
+    pub async fn update_password(&mut self, uup: UserUpdatePwd) -> UserResult<()> {
+        let db_user = self.db_handler.select_by_id(uup.userid).await?;
         match db_user {
             Some(db_user) => {
-                if db_user.password == old_password {
+                if db_user.password == uup.old_password {
                     self.db_handler
-                        .update_password_by_id(userid, new_password)
+                        .update_password_by_id(uup.userid, &uup.new_password)
                         .await?;
+
+                    let mut conn = get_redis_conn().await?;
+                    conn.del(uup.userid).await.map_err(anyhow::Error::from)?;
+
                     Ok(())
                 } else {
                     Err(UserError::PasswordNotMatch)
@@ -85,8 +85,8 @@ pub enum UserError {
     PasswordNotMatch,
     #[error("用户名已存在")]
     UsernameAlreadyExists,
-    #[error("其他错误：{0}")]
-    Other(anyhow::Error),
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
 }
 
 pub type UserResult<T> = Result<T, UserError>;
