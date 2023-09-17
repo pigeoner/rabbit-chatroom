@@ -13,4 +13,5 @@ avatar_quality = 80
 
 jwt_secret = "dev_secret"
 
-exp_days = 7
+jwt_refresh_exp_days = 30
+jwt_access_exp_minutes = 30

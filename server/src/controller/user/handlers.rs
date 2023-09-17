@@ -1,9 +1,12 @@
 use anyhow::Result;
 use salvo::prelude::*;
 
-use super::utils::{render_error, RenderError, RenderMsg, TokenResponse};
+use super::utils::{render_error, RenderError, RenderMsg};
 use crate::{
-    controller::{auth::sign_token, utils::BadRequest},
+    controller::{
+        auth::{set_cookie_token, AUTHED_USERID_KEY},
+        utils::BadRequest,
+    },
     entity::user::types::Username,
     service::{
         avatar::AvatarHandler,
@@ -14,20 +17,20 @@ use crate::{
 
 #[handler]
 pub async fn get_verifycode(res: &mut Response) -> Result<()> {
-    let vr = render_error!(res, gen_verifycode_base64().await);
+    let vr = render_error!(gen_verifycode_base64().await, res);
     res.render(Json(vr));
     Ok(())
 }
 
 #[handler]
 pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
-    let mut uh = render_error!(res, UserHandler::new().await);
-    let user_signup: UserSignup = render_error!(res, req.parse_json().await);
+    let mut uh = render_error!(UserHandler::new().await, res);
+    let user_signup: UserSignup = render_error!(req.parse_json().await, res);
 
     log::debug!("new signup: {:?}", user_signup);
 
-    render_error!(res, user_signup.verify().await);
-    render_error!(res, uh.signup(&user_signup).await);
+    render_error!(user_signup.verify().await, res);
+    render_error!(uh.signup(&user_signup).await, res);
 
     res.render_ok();
 
@@ -36,25 +39,25 @@ pub async fn signup(req: &mut Request, res: &mut Response) -> Result<()> {
 
 #[handler]
 pub async fn login(req: &mut Request, res: &mut Response) -> Result<()> {
-    let mut uh = render_error!(res, UserHandler::new().await);
-    let user_login: UserLogin = render_error!(res, req.parse_json().await);
+    let mut uh = render_error!(UserHandler::new().await, res);
+    let user_login: UserLogin = render_error!(req.parse_json().await, res);
 
     log::debug!("new login: {:?}", user_login);
 
-    let userid = render_error!(res, uh.login(&user_login).await);
-    let token = render_error!(res, sign_token(userid).await);
+    let userid = render_error!(uh.login(&user_login).await, res);
+    render_error!(set_cookie_token(res, userid).await, res);
 
-    res.render(Json(TokenResponse::new(token)));
+    res.render_ok();
 
     Ok(())
 }
 
 #[handler]
 pub async fn get_self_userinfo(depot: &mut Depot, res: &mut Response) -> Result<()> {
-    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+    let userid = depot.get::<i32>(AUTHED_USERID_KEY).unwrap().to_owned();
 
-    let mut uh = render_error!(res, UserHandler::new().await);
-    let user_info = render_error!(res, uh.get_userinfo(userid).await);
+    let mut uh = render_error!(UserHandler::new().await, res);
+    let user_info = render_error!(uh.get_userinfo(userid).await, res);
 
     res.render(Json(user_info));
 
@@ -64,12 +67,12 @@ pub async fn get_self_userinfo(depot: &mut Depot, res: &mut Response) -> Result<
 #[handler]
 pub async fn get_userinfo(req: &mut Request, res: &mut Response) -> Result<()> {
     let userid: i32 = render_error!(
-        res,
-        req.param("userid").ok_or(anyhow::anyhow!("无效的userid"))
+        req.param("userid").ok_or(anyhow::anyhow!("无效的userid")),
+        res
     );
 
-    let mut uh = render_error!(res, UserHandler::new().await);
-    let user_info = render_error!(res, uh.get_userinfo(userid).await);
+    let mut uh = render_error!(UserHandler::new().await, res);
+    let user_info = render_error!(uh.get_userinfo(userid).await, res);
 
     res.render(Json(user_info));
 
@@ -78,11 +81,11 @@ pub async fn get_userinfo(req: &mut Request, res: &mut Response) -> Result<()> {
 
 #[handler]
 pub async fn get_userinfo_by_name(req: &mut Request, res: &mut Response) -> Result<()> {
-    let username: Username = render_error!(res, req.parse_json().await);
+    let username: Username = render_error!(req.parse_json().await, res);
     let username = username.username;
 
-    let mut uh = render_error!(res, UserHandler::new().await);
-    let user_info = render_error!(res, uh.get_userinfo_by_name(&username).await);
+    let mut uh = render_error!(UserHandler::new().await, res);
+    let user_info = render_error!(uh.get_userinfo_by_name(&username).await, res);
     res.render(Json(user_info));
 
     Ok(())
@@ -94,17 +97,17 @@ pub async fn update_userinfo(
     depot: &mut Depot,
     res: &mut Response,
 ) -> Result<()> {
-    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+    let userid = depot.get::<i32>(AUTHED_USERID_KEY).unwrap().to_owned();
 
-    let new_info: Userinfo = render_error!(res, req.parse_json().await);
-    let mut uh = render_error!(res, UserHandler::new().await);
+    let new_info: Userinfo = render_error!(req.parse_json().await, res);
+    let mut uh = render_error!(UserHandler::new().await, res);
 
     if userid != new_info.userid {
         res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "无效的userid");
         return Ok(());
     }
 
-    render_error!(res, uh.update_userinfo(userid, new_info).await);
+    render_error!(uh.update_userinfo(userid, new_info).await, res);
 
     res.render_ok();
 
@@ -117,17 +120,17 @@ pub async fn update_password(
     depot: &mut Depot,
     res: &mut Response,
 ) -> Result<()> {
-    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+    let userid = depot.get::<i32>(AUTHED_USERID_KEY).unwrap().to_owned();
 
-    let uup: UserUpdatePwd = render_error!(res, req.parse_json().await);
+    let uup: UserUpdatePwd = render_error!(req.parse_json().await, res);
 
     if userid != uup.userid {
         res.render_statuscoded_msg(StatusCode::BAD_REQUEST, "无效的userid");
         return Ok(());
     }
 
-    let mut uh = render_error!(res, UserHandler::new().await);
-    render_error!(res, uh.update_password(uup).await);
+    let mut uh = render_error!(UserHandler::new().await, res);
+    render_error!(uh.update_password(uup).await, res);
 
     res.render_ok();
 
@@ -136,14 +139,14 @@ pub async fn update_password(
 
 #[handler]
 pub async fn upload_avatar(req: &mut Request, depot: &mut Depot, res: &mut Response) -> Result<()> {
-    let userid = depot.get::<i32>("authed_userid").unwrap().to_owned();
+    let userid = depot.get::<i32>(AUTHED_USERID_KEY).unwrap().to_owned();
 
     let avatar_file = render_error!(
-        res,
-        req.file("avatar").await.ok_or(BadRequest("无效的avatar"))
+        req.file("avatar").await.ok_or(BadRequest("无效的avatar")),
+        res
     );
 
-    render_error!(res, AvatarHandler::save_avatar(avatar_file, userid).await);
+    render_error!(AvatarHandler::save_avatar(avatar_file, userid).await, res);
 
     res.render_ok();
 

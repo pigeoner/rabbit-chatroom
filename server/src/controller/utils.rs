@@ -38,17 +38,6 @@ impl RenderMsg for Response {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct TokenResponse {
-    pub token: String,
-}
-
-impl TokenResponse {
-    pub fn new(token: String) -> Self {
-        Self { token }
-    }
-}
-
 // 错误类型的特征，用于统一错误向客户端的render
 pub trait ErrorRender {
     fn error_render(&self, res: &mut Response);
@@ -93,7 +82,7 @@ impl ErrorRender for BadRequest {
 // 用于简化对Result进行match并render错误的宏
 #[macro_export]
 macro_rules! render_error {
-    ($res:expr, $expr:expr) => {
+    ($expr:expr, $res:expr) => {
         match $expr {
             Ok(value) => value,
             Err(e) => {
@@ -104,6 +93,21 @@ macro_rules! render_error {
     };
 }
 pub use render_error;
+
+#[macro_export]
+macro_rules! render_error_skip {
+    ($expr:expr, $res:expr, $ctrl:expr) => {
+        match $expr {
+            Ok(value) => value,
+            Err(e) => {
+                $res.render_error(e);
+                $ctrl.skip_rest();
+                return Ok(());
+            }
+        }
+    };
+}
+pub use render_error_skip;
 
 // #[macro_export]
 // macro_rules! render_ok {

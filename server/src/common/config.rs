@@ -18,7 +18,8 @@ pub struct Config {
 
     pub jwt_secret: String,
 
-    pub exp_days: i64,
+    pub jwt_refresh_exp_days: i64,
+    pub jwt_access_exp_minutes: i64,
 }
 
 lazy_static! {

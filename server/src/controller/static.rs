@@ -19,7 +19,7 @@ impl StaticRoute for Router {
 
         self.push(
             Router::with_path(path)
-                .hoop_auth()
+                // .hoop_auth()
                 .get(StaticDir::new(CONFIG.static_dir.clone())),
         )
     }
