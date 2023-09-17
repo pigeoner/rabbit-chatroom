@@ -1,0 +1,54 @@
+Date : 2023-09-17 20:23:23
+Directory : /Users/rikka/prjs/rabbit-chatroom
+Total : 17 files,  224 codes, 33 comments, 55 blanks, all 312 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Rust     |         15 |        210 |         33 |         54 |        297 |
+| TOML     |          2 |         14 |          0 |          1 |         15 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                     | files      | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                        |         17 |        224 |         33 |         55 |        312 |
+| server                                                                   |         17 |        224 |         33 |         55 |        312 |
+| server (Files)                                                           |          2 |         14 |          0 |          1 |         15 |
+| server/src                                                               |         15 |        210 |         33 |         54 |        297 |
+| server/src (Files)                                                       |          1 |          0 |          7 |          0 |          7 |
+| server/src/common                                                        |          1 |          5 |          0 |          1 |          6 |
+| server/src/controller                                                    |          6 |        150 |         27 |         38 |        215 |
+| server/src/controller (Files)                                            |          5 |        162 |         27 |         23 |        212 |
+| server/src/controller/user                                               |          1 |        -12 |          0 |         15 |          3 |
+| server/src/entity                                                        |          4 |         18 |          0 |          7 |         25 |
+| server/src/entity (Files)                                                |          2 |         13 |          0 |          8 |         21 |
+| server/src/entity/user                                                   |          2 |          5 |          0 |         -1 |          4 |
+| server/src/service                                                       |          3 |         37 |         -1 |          8 |         44 |
++--------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++--------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                 | language | code       | comment    | blank      | total      |
++--------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| /Users/rikka/prjs/rabbit-chatroom/server/Cargo.lock                      | TOML     |         10 |          0 |          1 |         11 |
+| /Users/rikka/prjs/rabbit-chatroom/server/config.toml                     | TOML     |          4 |          0 |          0 |          4 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/common/config.rs            | Rust     |          5 |          0 |          1 |          6 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/controller.rs               | Rust     |          0 |          7 |          0 |          7 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/controller/auth.rs          | Rust     |        103 |         16 |         15 |        134 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/controller/image.rs         | Rust     |        -18 |          0 |         -6 |        -24 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/controller/static.rs        | Rust     |         20 |          1 |          6 |         27 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/controller/user.rs          | Rust     |         17 |          0 |          3 |         20 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/controller/user/handlers.rs | Rust     |        -12 |          0 |         15 |          3 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/controller/utils.rs         | Rust     |         40 |         10 |          5 |         55 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/entity/image.rs             | Rust     |         14 |          0 |          8 |         22 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/entity/user.rs              | Rust     |         -1 |          0 |          0 |         -1 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/entity/user/avatar.rs       | Rust     |         -7 |          0 |         -3 |        -10 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/entity/user/types.rs        | Rust     |         12 |          0 |          2 |         14 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/service/avatar.rs           | Rust     |         29 |          0 |          5 |         34 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/service/user.rs             | Rust     |         -2 |          0 |          2 |          0 |
+| /Users/rikka/prjs/rabbit-chatroom/server/src/service/verifycode.rs       | Rust     |         10 |         -1 |          1 |         10 |
+| Total                                                                    |          |        224 |         33 |         55 |        312 |
++--------------------------------------------------------------------------+----------+------------+------------+------------+------------+
