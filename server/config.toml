@@ -1,17 +1,17 @@
-database_url = "dev/dev.db"
-addr_listen = "127.0.0.1:3030"
+database_url = "dev/dev.db"  # sqlite数据库文件路径
+addr_listen = "127.0.0.1:3030"  # 服务器监听地址
 
-static_dir = "dev/static/"
-image_dir = "img/"
-avatar_dir = "avatar/"
+static_dir = "dev/static/"  # 静态文件目录
+image_dir = "img/"  # 静态文件目录下图片文件目录，
+avatar_dir = "avatar/"  # 图片文件目录下头像文件目录
 
-static_url = "static"
+static_url = "static"  # 静态文件url前缀
 
-avatar_width = 640
-avatar_mini_width = 64
-avatar_quality = 80
+avatar_width = 640  # 头像图片宽度
+avatar_mini_width = 64  # 头像缩略图宽度
+avatar_quality = 80  # 头像图片质量
 
-jwt_secret = "dev_secret"
+jwt_secret = "dev_secret"  # jwt密钥
 
-jwt_refresh_exp_days = 30
-jwt_access_exp_minutes = 30
+jwt_refresh_exp_days = 30  # jwt refresh有效期
+jwt_access_exp_minutes = 30  # jwt access有效期

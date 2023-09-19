@@ -46,3 +46,12 @@ $ npm run build:linux
 ### 2. 后端
 
 - [ ] TODO
+#### 启动
+确保已安装rust环境与cargo
+```
+cd server
+cargo run --release
+```
+#### 配置
+后端配置文件位于`server/config.toml`，默认配置如下
+```toml
